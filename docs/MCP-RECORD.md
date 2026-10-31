@@ -1,6 +1,6 @@
 # MCP record — DaVinci Resolve (free) ⇄ Claude Code
 
-Status: v0.1 design record, 2026-10-31. Owner: main model. Mode: PROVIDE-MCP (local stdio).
+Status: v0.1 design record, 2026-10-31. Owner: King James. Mode: PROVIDE-MCP (local stdio).
 
 ## 0. Where it runs, as whom
 
