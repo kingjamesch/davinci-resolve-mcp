@@ -1,4 +1,4 @@
--- Claude_MCP_Bridge.lua  v0.1.0
+-- Claude_MCP_Bridge.lua  v0.2.0
 -- The in-Resolve half of davinci-resolve-mcp. Launch from DaVinci Resolve:
 --   Workspace > Scripts > Claude_MCP_Bridge      (start / take over)
 --   Workspace > Scripts > Claude_MCP_Bridge_Stop (stop)
@@ -8,7 +8,7 @@
 -- dependencies, never opens UI, never deletes files, and exits on stop or take-over.
 -- JSON encoder and several measured host facts adapted from saadk408/davinci-resolve-lua-mcp (MIT).
 
-local VERSION = "0.1.0"
+local VERSION = "0.2.0"
 local BRIDGE = "davinci-resolve-mcp bridge v" .. VERSION
 local CFG = rawget(_G, "CMCP_CONFIG") or {}          -- test harness overrides (see tests/lua_harness.lua)
 local STATE_DIR_STAMP = [==[@@STATE_DIR@@]==]         -- install.py stamps the absolute state dir here

@@ -49,6 +49,24 @@ Other flags:
 | `--check` | Report what is installed. |
 | `--uninstall` | Remove the Lua scripts and the Claude Code registration. Add `--purge` to delete the state directory too. `./uninstall.sh` does the same. |
 
+## Install as a Claude Code plugin
+
+If you only use Claude Code, skip the clone. Inside Claude Code:
+
+```
+/plugin marketplace add kingjamesch/davinci-resolve-mcp
+/plugin install davinci-resolve@davinci-resolve-mcp
+/davinci-resolve:setup
+```
+
+The plugin registers the `davinci` server itself; `/davinci-resolve:setup` copies the two Lua
+scripts into Resolve's Scripts folder. Then restart Resolve once and click Workspace > Scripts >
+Claude_MCP_Bridge. The plugin also ships a `resolve` skill with the conventions Claude needs
+(absolute frames, marker rules, Lua idioms, Studio-only traps).
+
+Use either the plugin or `./install.sh`, not both, or Claude Code sees two `davinci` servers
+(`claude mcp remove davinci -s user` removes the clone-based one).
+
 ## Daily use
 
 1. Open Resolve with a project.

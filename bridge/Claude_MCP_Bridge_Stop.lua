@@ -1,4 +1,4 @@
--- Claude_MCP_Bridge_Stop.lua  v0.1.0
+-- Claude_MCP_Bridge_Stop.lua  v0.2.0
 -- Stops a running Claude_MCP_Bridge from inside DaVinci Resolve:
 --   Workspace > Scripts > Claude_MCP_Bridge_Stop
 -- It raises the stop flag the bridge polls (fu:SetData, shared in-process and persisted to

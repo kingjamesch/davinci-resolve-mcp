@@ -63,7 +63,7 @@ Execution of `run`: `fn = loadstring(code, "=claude")`, `setfenv(fn, env)` where
 
 ```
 {"v":1,"id":"…","session":"…","op":"run","ok":true,"ms":12,
- "result":<json>,"error":null,"prints":["…"],"truncated":false,"result_bytes":123,"bridge":"0.1.0"}
+ "result":<json>,"error":null,"prints":["…"],"truncated":false,"result_bytes":123,"bridge":"0.2.0"}
 ```
 
 JSON encoding of Lua values: `nil`→`null`; tables with keys exactly `1..n` → arrays; other tables →

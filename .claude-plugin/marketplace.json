@@ -1,0 +1,15 @@
+{
+  "name": "davinci-resolve-mcp",
+  "description": "DaVinci Resolve control for Claude Code (free edition supported)",
+  "owner": { "name": "kingjames", "url": "https://github.com/kingjamesch" },
+  "plugins": [
+    {
+      "name": "davinci-resolve",
+      "source": "./",
+      "description": "33 MCP tools plus run_lua for DaVinci Resolve 21.1 (free or Studio), a Resolve conventions skill, and a one-time bridge setup command.",
+      "version": "0.2.0",
+      "category": "productivity",
+      "tags": ["davinci-resolve", "video", "mcp", "lua"]
+    }
+  ]
+}
