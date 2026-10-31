@@ -48,7 +48,7 @@ class PluginManifestTest(unittest.TestCase):
         self.assertEqual(r["name"], "io.github.kingjamesch/davinci-resolve-mcp")
         self.assertEqual(r["version"], __version__)
         self.assertEqual(r["repository"]["url"], "https://github.com/kingjamesch/davinci-resolve-mcp")
-        self.assertLessEqual(len(r["description"]), 100 * 3)
+        self.assertLessEqual(len(r["description"]), 100)  # registry limit
         self.assertTrue(r["$schema"].startswith("https://static.modelcontextprotocol.io/schemas/"))
 
     def test_skill_and_command(self):
