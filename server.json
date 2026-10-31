@@ -1,0 +1,12 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.kingjamesch/davinci-resolve-mcp",
+  "title": "DaVinci Resolve MCP (free edition)",
+  "description": "Drive DaVinci Resolve 21.1, including the free edition, from Claude Code: 33 tools plus run_lua, via a Lua bridge inside Resolve. Manual setup - see README.",
+  "repository": {
+    "url": "https://github.com/kingjamesch/davinci-resolve-mcp",
+    "source": "github"
+  },
+  "version": "0.2.0",
+  "websiteUrl": "https://github.com/kingjamesch/davinci-resolve-mcp#readme"
+}

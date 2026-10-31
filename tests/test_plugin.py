@@ -43,6 +43,14 @@ class PluginManifestTest(unittest.TestCase):
         self.assertEqual(entry["source"], "./")
         self.assertEqual(entry["version"], __version__)
 
+    def test_registry_server_json(self):
+        r = json.load(open(os.path.join(ROOT, "server.json"), encoding="utf-8"))
+        self.assertEqual(r["name"], "io.github.kingjamesch/davinci-resolve-mcp")
+        self.assertEqual(r["version"], __version__)
+        self.assertEqual(r["repository"]["url"], "https://github.com/kingjamesch/davinci-resolve-mcp")
+        self.assertLessEqual(len(r["description"]), 100 * 3)
+        self.assertTrue(r["$schema"].startswith("https://static.modelcontextprotocol.io/schemas/"))
+
     def test_skill_and_command(self):
         skill = _frontmatter(os.path.join(ROOT, "skills", "resolve", "SKILL.md"))
         self.assertEqual(skill["name"], "resolve")
