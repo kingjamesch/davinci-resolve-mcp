@@ -67,6 +67,10 @@ Claude_MCP_Bridge. The plugin also ships a `resolve` skill with the conventions 
 Use either the plugin or `./install.sh`, not both, or Claude Code sees two `davinci` servers
 (`claude mcp remove davinci -s user` removes the clone-based one).
 
+The server is also listed on the [MCP Registry](https://registry.modelcontextprotocol.io/v0.1/servers?search=davinci-resolve-mcp)
+as `io.github.kingjamesch/davinci-resolve-mcp` for discovery. The listing is metadata only: install
+from the plugin or the clone as above, since the bridge must be placed inside Resolve by hand.
+
 ## Daily use
 
 1. Open Resolve with a project.

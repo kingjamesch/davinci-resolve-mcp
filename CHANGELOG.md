@@ -6,6 +6,7 @@
 - Bundled skill `davinci-resolve` with the measured Resolve conventions (frame spaces, marker rules, Lua idioms, Studio-only traps) so Claude drives Resolve correctly from the first call.
 - `/davinci-resolve:setup` command that copies the Lua bridge into Resolve's Scripts folder from inside Claude Code.
 - Bridge and stop script report version 0.2.0 (no protocol change; a 0.1.0 bridge keeps working).
+- Listed on the MCP Registry as `io.github.kingjamesch/davinci-resolve-mcp` (metadata-only `server.json`).
 
 ## 0.1.0 — 2026-10-31
 
