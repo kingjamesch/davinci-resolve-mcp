@@ -1,5 +1,7 @@
 # davinci-resolve-mcp
 
+[![test](https://github.com/kingjamesch/davinci-resolve-mcp/actions/workflows/test.yml/badge.svg)](https://github.com/kingjamesch/davinci-resolve-mcp/actions/workflows/test.yml)
+
 Let Claude Code drive the free edition of DaVinci Resolve 21.1.
 
 Resolve 21.1 free removed Python scripts from the Workspace > Scripts menu and blocks external scripting. Lua menu scripts still run. This project uses that gap. A Lua bridge runs inside Resolve and a tiny Python MCP server runs outside. The server sends Lua to the bridge, the bridge runs it against the live `resolve` object and sends the answer back. A call takes about 80 to 95 ms as measured. There are 33 tools, plus `run_lua` for anything the named tools do not cover.
@@ -15,6 +17,8 @@ Resolve 21.1 free removed Python scripts from the Workspace > Scripts menu and b
 ## Install
 
 ```bash
+git clone https://github.com/kingjamesch/davinci-resolve-mcp.git
+cd davinci-resolve-mcp
 ./install.sh
 ```
 
