@@ -1,0 +1,31 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit:
+    name: unit tests (${{ matrix.os }}, python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+        python: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Compile
+        run: python -m compileall -q davinci_mcp server.py install.py scripts tests
+      - name: Unit tests
+        # Tests that need DaVinci Resolve's bundled Lua interpreter skip themselves when it is absent.
+        env:
+          DAVINCI_MCP_STATE_DIR: ${{ runner.temp }}/davinci-mcp-state
+          DAVINCI_MCP_PROFILES_DIR: ${{ runner.temp }}/davinci-mcp-profiles
+        run: python -m unittest discover -s tests -v
+      - name: Tool reference is in sync
+        run: python scripts/gen_tools_doc.py && git diff --exit-code -- docs/TOOLS.md
