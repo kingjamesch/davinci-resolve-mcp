@@ -3,10 +3,11 @@ import subprocess
 import tempfile
 import unittest
 
+from davinci_mcp import paths
 from davinci_mcp.tools import TOOLS, ToolError, validate_args
 from davinci_mcp.tools import timelines  # noqa: F401  (registers the tools)
 
-FUSCRIPT = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fuscript"
+FUSCRIPT = paths.FUSCRIPT
 
 # name -> (destructive, readOnly, good args, bad args list)
 EXPECTED = {
@@ -78,7 +79,7 @@ class TimelineToolsTest(unittest.TestCase):
                 path = f.name
             try:
                 out = subprocess.run(
-                    [FUSCRIPT, "-l", "lua", "-x", "assert(loadfile('%s')); print('ok')" % path],
+                    [FUSCRIPT, "-l", "lua", "-x", "assert(loadfile('%s')); print('ok')" % path.replace("\\", "/")],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, timeout=60)
                 self.assertIn("ok", out.stdout, "%s: %s %s" % (name, out.stdout, out.stderr))
             finally:

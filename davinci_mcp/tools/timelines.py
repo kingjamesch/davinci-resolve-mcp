@@ -388,11 +388,12 @@ lua_tool(
     }, ["path", "type"]),
     DESTRUCTIVE, timeout=120, lua=r'''
 local path = args.path
-if path:sub(1, 1) ~= "/" then fail("Path must be absolute.") end
-local parent = path:match("^(.*)/[^/]+$")
+if not is_abs_path(path) then fail("Path must be absolute.") end
+local parent = path:match("^(.*)[/\\][^/\\]+$")
 if parent == nil or parent == "" then parent = "/" end
-local base = path:match("([^/]+)$") or ""
-if base:sub(1, 1) == "." or base:find("/", 1, true) then fail("The file name may not start with a dot.") end
+if parent:match("^%a:$") then parent = parent .. "\\" end   -- "C:\file.edl" -> parent "C:\"
+local base = path:match("([^/\\]+)$") or ""
+if base:sub(1, 1) == "." or base:find("[/\\]") then fail("The file name may not start with a dot.") end
 if not bmd.direxists(parent) then fail("Folder does not exist: " .. parent .. ".") end
 if bmd.fileexists(path) then
   if not args.overwrite then fail("File exists: " .. path .. ". Pass overwrite:true (and confirm:true after the user agrees) to replace it.") end

@@ -22,6 +22,7 @@ The prelude adds (all raise a plain error sentence on failure, which the server 
   "Master", "/"); fail "No media pool folder '<path>'."
 - ``page_slice(list, offset, limit, cap)`` — returns slice, total, truncated (offset 0-based).
 - ``str(v)`` — tostring that maps nil to nil (not "nil").
+- ``is_abs_path(p)`` — true for a POSIX ("/...") or Windows ("C:\\...", "C:/...", "\\\\server\\...") absolute path.
 - ``require_studio()`` — fail "This needs DaVinci Resolve Studio; the free edition cannot run it."
   unless GetProductName contains "Studio". Call it BEFORE any Studio-only API: calling one on the
   free edition opens an upgrade dialog that wedges menu scripts.
@@ -30,6 +31,9 @@ The prelude adds (all raise a plain error sentence on failure, which the server 
 PRELUDE = r'''
 local function fail(msg) error(tostring(msg), 0) end
 local function str(v) if v == nil then return nil end return tostring(v) end
+local function is_abs_path(p)
+  return type(p) == "string" and (p:sub(1, 1) == "/" or p:match("^%a:[/\\]") ~= nil or p:sub(1, 2) == "\\\\")
+end
 local function need_project()
   local pm = resolve:GetProjectManager()
   local p = pm and pm:GetCurrentProject() or nil

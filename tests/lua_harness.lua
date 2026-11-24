@@ -2,6 +2,8 @@
 -- usage: fuscript -l lua tests/lua_harness.lua <state_dir> <prefs_file> <max_ticks> <bridge_path>
 local state_dir, prefs_file, max_ticks, bridge_path = arg[1], arg[2], arg[3], arg[4]
 
+local IS_WINDOWS = package ~= nil and package.config ~= nil and package.config:sub(1, 1) == "\\"
+
 local function shell_quote(s) return "'" .. tostring(s):gsub("'", "'\\''") .. "'" end
 
 local PREFIX = "ClaudeMCP."
@@ -21,6 +23,8 @@ local function write_prefs()
   local fh = assert(io.open(tmp, "w"))
   fh:write(table.concat(lines, "\n"), "\n")
   fh:close()
+  -- Windows rename does not replace an existing file (POSIX rename does).
+  if IS_WINDOWS then os.remove(prefs_file) end
   assert(os.rename(tmp, prefs_file))
 end
 
@@ -39,6 +43,16 @@ end
 local media_storage = {}
 function media_storage.GetSubFolderList(self, dir)
   local out = {}
+  if IS_WINDOWS then
+    -- Like Resolve on Windows: backslash paths only, full path per subfolder.
+    local p = io.popen('dir /b /ad "' .. tostring(dir) .. '" 2>nul')
+    if not p then return out end
+    for line in p:lines() do
+      if line ~= "" then out[#out + 1] = tostring(dir):gsub("\\+$", "") .. "\\" .. line end
+    end
+    p:close()
+    return out
+  end
   local p = io.popen('find ' .. shell_quote(dir) .. ' -mindepth 1 -maxdepth 1 -type d 2>/dev/null')
   if not p then return out end
   for line in p:lines() do out[#out + 1] = line end

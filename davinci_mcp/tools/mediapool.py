@@ -177,7 +177,7 @@ IMPORT_SCHEMA = {
 
 IMPORT_LUA = r'''
 for _, p in ipairs(args.paths) do
-  if p:sub(1, 1) ~= "/" then fail("Path must be absolute: " .. p .. ".") end
+  if not is_abs_path(p) then fail("Path must be absolute: " .. p .. ".") end
   if not (bmd.fileexists(p) or bmd.direxists(p)) then fail("Path not found: " .. p .. ".") end
 end
 local mp = need_project():GetMediaPool()

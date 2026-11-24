@@ -135,7 +135,7 @@ if args.format then
     fail("Resolve rejected format '" .. tostring(args.format) .. "' / codec '" .. tostring(codec or args.codec) .. "'; see list_render_options.")
   end
 end
-if args.customName ~= nil and (args.customName:find("/", 1, true) or args.customName:sub(1, 1) == "." or args.customName:find("%.%.")) then
+if args.customName ~= nil and (args.customName:find("[/\\]") or args.customName:sub(1, 1) == "." or args.customName:find("%.%.")) then
   fail("customName must be a plain file name: no slashes, no leading dot, no '..'.")
 end
 local settings = { TargetDir = dir, CustomName = args.customName, MarkIn = args.markIn, MarkOut = args.markOut }

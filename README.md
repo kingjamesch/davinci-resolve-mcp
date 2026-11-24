@@ -8,10 +8,10 @@ Resolve 21.1 free removed Python scripts from the Workspace > Scripts menu and b
 
 ## Requirements
 
-- macOS
-- DaVinci Resolve 21.1.2, free or Studio
+- macOS or Windows 10/11
+- DaVinci Resolve 21.1.2 or later, free or Studio (Windows tested on 21.2 free)
 - Claude Code
-- Python 3.9 or newer at `/usr/bin/python3`
+- Python 3.9 or newer: `/usr/bin/python3` on macOS; on Windows, the Python you run the installer with
 - No pip installs. The server uses the standard library only.
 
 ## Install
@@ -48,6 +48,36 @@ Other flags:
 | `--no-claude` | Skip the Claude Code registration. |
 | `--check` | Report what is installed. |
 | `--uninstall` | Remove the Lua scripts and the Claude Code registration. Add `--purge` to delete the state directory too. `./uninstall.sh` does the same. |
+
+## Install on Windows
+
+```powershell
+git clone https://github.com/kingjamesch/davinci-resolve-mcp.git
+cd davinci-resolve-mcp
+py install.py
+```
+
+`install.py` takes the same flags as `install.sh`. On Windows it:
+
+1. Copies the two Lua scripts into `%APPDATA%\Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility\`.
+2. Creates the state directory `%LOCALAPPDATA%\ClaudeMCP`.
+3. Registers the server with Claude Code as `davinci`, using the Python that ran the installer.
+4. Checks that the state directory is a Resolve **Media Storage location** and prints the next steps.
+
+One extra step on Windows, done once: in Resolve open **Preferences > System > Media Storage**, click
+**Add**, choose `%LOCALAPPDATA%\ClaudeMCP` (for example `C:\Users\<you>\AppData\Local\ClaudeMCP`) and
+**Save**. On Windows, `MediaStorage:GetSubFolderList` only lists folders inside a Media Storage
+location, so without it the bridge never sees a request. `py install.py --check` reports
+`media_storage_ok`.
+
+Notes on the Windows port:
+
+- Request chunks are sized so that every request folder path stays inside the Windows `MAX_PATH`
+  limit, and the bridge joins paths with backslashes (MediaStorage returns nothing for forward-slash paths on Windows).
+- The cross-process lock uses `msvcrt.locking`, and the bridge liveness check uses `OpenProcess`
+  (Python's `os.kill(pid, 0)` would terminate Resolve on Windows).
+- Path arguments (`import_media`, `export_timeline`) accept `C:\...`, `C:/...` and UNC paths.
+- The Claude Code plugin route still targets macOS (`/usr/bin/python3`); on Windows use `py install.py`.
 
 ## Install as a Claude Code plugin
 
@@ -113,19 +143,20 @@ The wire format is in [docs/PROTOCOL.md](docs/PROTOCOL.md). The design record is
 
 - **Tools say the bridge is not running.** Open Resolve with a project and click Workspace > Scripts > Claude_MCP_Bridge, then retry.
 - **Workspace > Scripts shows no Claude_MCP_Bridge.** Resolve was not restarted after the install. Quit and reopen it. Run `./install.sh --check` to confirm the files are in place.
+- **Windows: the bridge is running but every call times out.** The state directory is not a Media Storage location. Add `%LOCALAPPDATA%\ClaudeMCP` under Preferences > System > Media Storage (see "Install on Windows"); `py install.py --check` shows `media_storage_ok`.
 - **A tool times out.** Resolve is probably showing a dialog, such as the Studio upsell or a frame-rate question after an import. Dismiss it in Resolve. Long operations also block the bridge until they finish.
 - **A Studio-only feature fails.** Do not use Studio-only features on the free edition. They fail or open an upgrade dialog that blocks the bridge.
 - **The old davinci-resolve-lite-mcp Python scripts do nothing.** They cannot work on 21.1 or later, because Python scripts no longer appear in the Scripts menu and external scripting is blocked.
 
 ## Not included yet
 
-Color-page node tools, gallery and stills, Fairlight, compound and Fusion clips, keyboard and preset import or export, project archive and restore, automatic bridge start when Resolve launches, a Claude Desktop `.mcpb` package, and Windows. `run_lua` covers most of these in the meantime. Set `DAVINCI_MCP_DISABLE_RUN_LUA=1` in the server environment to remove `run_lua` from the tool list.
+Color-page node tools, gallery and stills, Fairlight, compound and Fusion clips, keyboard and preset import or export, project archive and restore, automatic bridge start when Resolve launches, a Claude Desktop `.mcpb` package, and the plugin install route on Windows. `run_lua` covers most of these in the meantime. Set `DAVINCI_MCP_DISABLE_RUN_LUA=1` in the server environment to remove `run_lua` from the tool list.
 
 ## Security posture
 
 - Local only. The server opens no network port and sends no telemetry.
-- There are no credentials. The identity is your macOS user.
-- Anyone who can write to the state directory can run Lua inside Resolve as you. The directory is created with mode 0700.
+- There are no credentials. The identity is your OS user.
+- Anyone who can write to the state directory can run Lua inside Resolve as you. On macOS the directory is created with mode 0700; on Windows it lives under your profile's `%LOCALAPPDATA%`, which only your user can write to by default.
 - Destructive tools need `confirm: true`. `run_lua` is open-ended, so Claude is told to ask you before running code that deletes or overwrites.
 - Responses are size-capped. Over-cap results come back marked `truncated`.
 - `Fusion.prefs` is readable by your user and holds the last response until it is cleared.

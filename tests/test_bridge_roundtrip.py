@@ -5,10 +5,10 @@ import tempfile
 import time
 import unittest
 
-from davinci_mcp import luafmt, prefs
+from davinci_mcp import luafmt, paths, prefs
 from davinci_mcp.transport import BridgeClient, LuaError
 
-FUSCRIPT = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fuscript"
+FUSCRIPT = paths.FUSCRIPT
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HARNESS = os.path.join(ROOT, "tests", "lua_harness.lua")
 BRIDGE = os.path.join(ROOT, "bridge", "Claude_MCP_Bridge.lua")

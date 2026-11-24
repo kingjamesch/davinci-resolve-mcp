@@ -7,17 +7,17 @@ import stat
 import subprocess
 import sys
 
+from davinci_mcp import paths
+
 TOKEN = "@@STATE_DIR@@"
 BRIDGE = "Claude_MCP_Bridge.lua"
 STOP = "Claude_MCP_Bridge_Stop.lua"
-PYTHON = "/usr/bin/python3"
+PYTHON = paths.PYTHON
 SERVER_NAME = "davinci"
 
-_SUPPORT = os.path.expanduser("~/Library/Application Support")
-_RESOLVE = os.path.join(_SUPPORT, "Blackmagic Design", "DaVinci Resolve")
-SCRIPTS_UTILITY = os.path.join(_RESOLVE, "Fusion", "Scripts", "Utility")
-STATE_DIR = os.path.join(_RESOLVE, "ClaudeMCP")
-DESKTOP_CONFIG = os.path.join(_SUPPORT, "Claude", "claude_desktop_config.json")
+SCRIPTS_UTILITY = paths.SCRIPTS_UTILITY
+STATE_DIR = paths.STATE_DIR
+DESKTOP_CONFIG = paths.CLAUDE_DESKTOP_CONFIG
 
 NEXT_STEPS = (
     "NEXT STEPS\n"
@@ -26,6 +26,22 @@ NEXT_STEPS = (
     "Claude_MCP_Bridge_Stop stops it).\n"
     "3) In Claude Code run /mcp and check that 'davinci' is connected, then ask for resolve_status."
 )
+
+WINDOWS_MEDIA_STORAGE_STEP = (
+    "WINDOWS: add the state folder as a Resolve Media Storage location (one time)\n"
+    "   Resolve > Preferences > System > Media Storage > Add > %s > Save.\n"
+    "   The bridge can only see request folders inside a Media Storage location."
+)
+
+
+def _strip_sep(path):
+    """Drop trailing separators but keep a root ("/" or "C:\\")."""
+    stripped = path.rstrip("/\\")
+    if not stripped:
+        return path[:1] or "/"
+    if len(stripped) == 2 and stripped[1] == ":":
+        return stripped + os.sep
+    return stripped
 
 
 def _server_path(repo_dir):
@@ -38,7 +54,7 @@ def _add_command(repo_dir, scope="user"):
 
 def install(repo_dir, scripts_dir, state_dir):
     actions = []
-    state_dir = os.path.abspath(state_dir).rstrip("/") or "/"
+    state_dir = _strip_sep(os.path.abspath(state_dir))
     os.makedirs(scripts_dir, exist_ok=True)
     actions.append("ensured " + scripts_dir)
     inbox = os.path.join(state_dir, "inbox")
@@ -121,8 +137,8 @@ def configure_claude_desktop(config_path, repo_dir):
     return "; ".join(msgs)
 
 
-def check(repo_dir, scripts_dir, state_dir):
-    state_dir = os.path.abspath(state_dir).rstrip("/") or "/"
+def check(repo_dir, scripts_dir, state_dir, resolve_config=None):
+    state_dir = _strip_sep(os.path.abspath(state_dir))
     report = {}
     bridge = os.path.join(scripts_dir, BRIDGE)
     report["bridge_installed"] = os.path.isfile(bridge)
@@ -139,6 +155,9 @@ def check(repo_dir, scripts_dir, state_dir):
         report["state_dir_mode"] = None
     report["inbox_present"] = os.path.isdir(os.path.join(state_dir, "inbox"))
     report["server_py_present"] = os.path.isfile(_server_path(repo_dir))
+    if paths.IS_WINDOWS or resolve_config:
+        roots = paths.media_storage_roots(resolve_config)
+        report["media_storage_ok"] = None if roots is None else paths.is_inside_media_storage(state_dir, roots)
     if shutil.which("claude") is None:
         report["claude_registered"] = None
     else:
@@ -195,6 +214,13 @@ def main(argv=None):
         ok, msg = register_claude_code(repo)
         print(("OK: " if ok else "NOT REGISTERED: ") + msg)
     print()
+    if paths.IS_WINDOWS:
+        roots = paths.media_storage_roots()
+        if roots is not None and paths.is_inside_media_storage(STATE_DIR, roots):
+            print("OK: %s is a Resolve Media Storage location" % STATE_DIR)
+        else:
+            print(WINDOWS_MEDIA_STORAGE_STEP % STATE_DIR)
+        print()
     print(NEXT_STEPS)
     return 0
 

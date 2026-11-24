@@ -3,13 +3,14 @@ import subprocess
 import tempfile
 import unittest
 
+from davinci_mcp import paths
 from davinci_mcp.tools import TOOLS, ToolError, validate_args
 from davinci_mcp.tools import mediapool  # noqa: F401  (registers the tools)
 
 NAMES = ["list_media_pool", "get_clip_properties", "create_media_pool_folder", "import_media",
          "append_clips_to_timeline"]
 READ = {"list_media_pool", "get_clip_properties"}
-FUSCRIPT = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fuscript"
+FUSCRIPT = paths.FUSCRIPT
 
 GOOD = {
     "list_media_pool": {"folder": "Master/B-roll", "offset": 0, "limit": 50},
@@ -68,7 +69,7 @@ class MediaPoolTools(unittest.TestCase):
                 path = f.name
             try:
                 out = subprocess.run([FUSCRIPT, "-l", "lua", "-x",
-                                      "assert(loadfile('%s')); print('ok')" % path],
+                                      "assert(loadfile('%s')); print('ok')" % path.replace("\\", "/")],
                                      stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                      universal_newlines=True, timeout=60)
                 self.assertIn("ok", out.stdout, "%s: %s" % (n, out.stderr))

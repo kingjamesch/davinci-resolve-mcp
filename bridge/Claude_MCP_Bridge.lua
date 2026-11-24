@@ -282,11 +282,15 @@ end
 local function resolve_state_dir()
   if CFG.state_dir then return CFG.state_dir end
   if #STATE_DIR_STAMP > 0 and STATE_DIR_STAMP:sub(1, 2) ~= "@@" then return (STATE_DIR_STAMP:gsub("[/\\]+$", "")) end
+  local localappdata = os.getenv("LOCALAPPDATA")
+  if type(localappdata) == "string" and #localappdata > 0 then   -- Windows (see install.py)
+    return localappdata .. "\\ClaudeMCP"
+  end
   local home = os.getenv("HOME")
   if type(home) == "string" and #home > 0 then
     return home .. "/Library/Application Support/Blackmagic Design/DaVinci Resolve/ClaudeMCP"
   end
-  return nil, "cannot locate the state directory (HOME unset and no stamp)"
+  return nil, "cannot locate the state directory (HOME and LOCALAPPDATA unset and no stamp)"
 end
 
 -- Prefs channel (the only SetData/GetData call sites) ---------------------------------------------
@@ -509,8 +513,11 @@ local function start()
     set_data(st, "CMCP_Session", session_json(st, "error", { error = err }))
     return nil, err
   end
-  st.inbox = st.state_dir .. "/inbox"
-  st.pending = st.inbox .. "/PENDING"
+  -- Windows MediaStorage lists only backslash paths (a forward-slash path returns no subfolders),
+  -- so join with the separator the state dir already uses.
+  local sep = st.state_dir:find("\\", 1, true) and "\\" or "/"
+  st.inbox = st.state_dir .. sep .. "inbox"
+  st.pending = st.inbox .. sep .. "PENDING"
   st.pid = tonumber(bmd_call("getpid")) or -1
   local uuid = bmd_call("createuuid")
   if type(uuid) == "string" then uuid = uuid:gsub("[^%w]", ""):lower() end
