@@ -10,8 +10,9 @@ import os
 import re
 from typing import Dict, Optional, Tuple
 
-PROFILES_DIR = os.path.expanduser(
-    "~/Library/Application Support/Blackmagic Design/DaVinci Resolve/Fusion/Profiles")
+from . import paths
+
+PROFILES_DIR = paths.PROFILES_DIR
 PREFS_FILE_NAME = "Fusion.prefs"
 KEYS = ("CMCP_Resp", "CMCP_Session", "CMCP_Owner", "CMCP_Beat", "CMCP_Stop")
 _KEY_RES = {k: re.compile(r"\b" + k + r' = "([^"\r\n]*)"') for k in KEYS}

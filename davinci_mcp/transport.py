@@ -5,7 +5,6 @@ Requests become a folder of hex-named subfolders under ``STATE_DIR/inbox/<id>/``
 them with ``fu:SetData``. One request in flight at a time. Python 3.9 compatible, stdlib only.
 """
 
-import fcntl
 import json
 import os
 import random
@@ -16,12 +15,19 @@ import threading
 import time
 from typing import Any, Callable, Dict, Optional
 
-from . import luafmt, prefs
+from . import luafmt, paths, prefs
 
-STATE_DIR_DEFAULT = os.environ.get("DAVINCI_MCP_STATE_DIR") or os.path.expanduser(
-    "~/Library/Application Support/Blackmagic Design/DaVinci Resolve/ClaudeMCP")
+if paths.IS_WINDOWS:
+    import ctypes
+    import msvcrt
+else:
+    import fcntl
+
+STATE_DIR_DEFAULT = os.environ.get("DAVINCI_MCP_STATE_DIR") or paths.STATE_DIR
 PROFILES_DIR_DEFAULT = os.environ.get("DAVINCI_MCP_PROFILES_DIR") or None   # None -> prefs.PROFILES_DIR
 CHUNK_BYTES = 120            # 240 hex chars + "NNNN-" prefix stays well under the 255-byte name limit
+WINDOWS_MAX_PATH = 247       # CreateDirectory allows MAX_PATH - 12 = 248 characters; keep one spare
+MIN_CHUNK_BYTES = 16
 POLL_S = 0.015
 PING_TIMEOUT_S = 3.0
 BEAT_STALE_S = 45.0
@@ -116,7 +122,8 @@ class BridgeClient:
         return removed
 
     class _process_lock(object):
-        """flock on STATE_DIR/lock: one request in flight across every server process on this Mac."""
+        """Exclusive lock on STATE_DIR/lock (flock, or msvcrt.locking on Windows): one request in
+        flight across every server process on this machine."""
 
         def __init__(self, client):
             self.client = client
@@ -127,7 +134,7 @@ class BridgeClient:
             deadline = time.monotonic() + LOCK_WAIT_S
             while True:
                 try:
-                    fcntl.flock(self.fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    _lock_nb(self.fh)
                     return self
                 except OSError:
                     if time.monotonic() >= deadline:
@@ -139,7 +146,7 @@ class BridgeClient:
         def __exit__(self, *exc):
             if self.fh is not None:
                 try:
-                    fcntl.flock(self.fh.fileno(), fcntl.LOCK_UN)
+                    _unlock(self.fh)
                 finally:
                     self.fh.close()
                     self.fh = None
@@ -209,9 +216,10 @@ class BridgeClient:
         tmp = final + ".tmp"
         shutil.rmtree(tmp, ignore_errors=True)
         os.mkdir(tmp, 0o700)
-        for i in range(0, len(payload), CHUNK_BYTES):
-            chunk = payload[i:i + CHUNK_BYTES]
-            os.mkdir(os.path.join(tmp, "%04d-%s" % (i // CHUNK_BYTES, chunk.hex())), 0o700)
+        size = chunk_bytes_for(tmp)
+        for i in range(0, len(payload), size):
+            chunk = payload[i:i + size]
+            os.mkdir(os.path.join(tmp, "%04d-%s" % (i // size, chunk.hex())), 0o700)
         os.rename(tmp, final)
         with open(self.pending, "a"):
             pass
@@ -304,7 +312,39 @@ class BridgeClient:
             return False
 
 
+def chunk_bytes_for(parent: str, windows: bool = None) -> int:
+    """Payload bytes per chunk folder under ``parent``. On Windows the whole path must stay within
+    MAX_PATH, so the chunk shrinks to fit what the parent path leaves (index up to 5 digits + "-")."""
+    if not (paths.IS_WINDOWS if windows is None else windows):
+        return CHUNK_BYTES
+    room = WINDOWS_MAX_PATH - len(os.path.abspath(parent)) - 1 - len("NNNNN-")
+    if room < 2 * MIN_CHUNK_BYTES:
+        raise BridgeError("The state folder path is too long for Windows (%d characters); set "
+                          "DAVINCI_MCP_STATE_DIR to a shorter folder." % len(os.path.abspath(parent)))
+    return min(CHUNK_BYTES, room // 2)
+
+
+def _lock_nb(fh) -> None:
+    """Take an exclusive, non-blocking lock on ``fh``; raise OSError when another process holds it."""
+    if paths.IS_WINDOWS:
+        fh.seek(0)
+        msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)   # locks byte 0, even past EOF
+    else:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+
+
+def _unlock(fh) -> None:
+    if paths.IS_WINDOWS:
+        fh.seek(0)
+        msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
+    else:
+        fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+
+
 def _pid_alive(pid: int) -> bool:
+    if paths.IS_WINDOWS:
+        # Never os.kill(pid, 0) here: on Windows that calls TerminateProcess and would kill Resolve.
+        return _pid_alive_windows(pid)
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -314,6 +354,27 @@ def _pid_alive(pid: int) -> bool:
     except OSError:
         return False
     return True
+
+
+def _pid_alive_windows(pid: int) -> bool:
+    PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+    STILL_ACTIVE = 259
+    ERROR_ACCESS_DENIED = 5
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel32.OpenProcess.restype = ctypes.c_void_p
+    kernel32.OpenProcess.argtypes = [ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong]
+    kernel32.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_ulong)]
+    kernel32.CloseHandle.argtypes = [ctypes.c_void_p]
+    handle = kernel32.OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid)
+    if not handle:
+        return ctypes.get_last_error() == ERROR_ACCESS_DENIED   # exists but belongs to someone else
+    try:
+        code = ctypes.c_ulong()
+        if not kernel32.GetExitCodeProcess(handle, ctypes.byref(code)):
+            return True
+        return code.value == STILL_ACTIVE
+    finally:
+        kernel32.CloseHandle(handle)
 
 
 def _base36(n: int) -> str:

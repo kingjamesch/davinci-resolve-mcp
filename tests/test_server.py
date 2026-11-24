@@ -18,7 +18,7 @@ os.environ.setdefault("DAVINCI_MCP_PROFILES_DIR", os.path.join(_ISOLATED, "Profi
 atexit.register(shutil.rmtree, _ISOLATED, True)
 from unittest import mock
 
-from davinci_mcp import server
+from davinci_mcp import paths, server
 from davinci_mcp.server import INSTRUCTIONS, MCPDispatcher, SUPPORTED_VERSIONS
 from davinci_mcp.tools import READ_ONLY, TOOLS, WRITE, ToolError, register
 from davinci_mcp.transport import BridgeNotRunning, BridgeTimeout, LuaError
@@ -278,7 +278,7 @@ class ProcessTests(unittest.TestCase):
         ]
         stdin = "".join(json.dumps(m) + "\n" for m in lines).encode("utf-8")
         proc = subprocess.run(
-            ["/usr/bin/python3", os.path.join(ROOT, "server.py")],
+            [paths.PYTHON, os.path.join(ROOT, "server.py")],
             input=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=15, cwd=ROOT)
         self.assertEqual(proc.returncode, 0, proc.stderr.decode("utf-8", "replace"))
         out = [json.loads(line) for line in proc.stdout.decode("utf-8").splitlines() if line.strip()]

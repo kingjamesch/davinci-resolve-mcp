@@ -4,9 +4,10 @@ import os
 import re
 from typing import Dict, List, Optional
 
+from . import paths
 from .tools import ToolError
 
-DOCS_DIR = "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
+DOCS_DIR = paths.DOCS_DIR
 PYI_NAME = "DaVinciResolveScript.pyi"
 README_NAME = "README.md"
 DOC_MAX = 600

@@ -3,9 +3,9 @@ import subprocess
 import tempfile
 import unittest
 
-from davinci_mcp import luafmt
+from davinci_mcp import luafmt, paths
 
-FUSCRIPT = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fuscript"
+FUSCRIPT = paths.FUSCRIPT
 HAVE_FUSCRIPT = os.path.exists(FUSCRIPT)
 
 
@@ -100,7 +100,7 @@ class BuildRequestTests(unittest.TestCase):
                 fh.write(b"return " + payload)
             script = ("local t=dofile('%s') print(t.id) print(t.op) print(t.ts) "
                       "print(t.code == %s) print(t.args['end'][2])"
-                      % (path, luafmt.lua_string(code)))
+                      % (path.replace("\\", "/"), luafmt.lua_string(code)))
             res = subprocess.run([FUSCRIPT, "-l", "lua", "-x", script], stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE, universal_newlines=True, timeout=30)
         lines = [ln for ln in res.stdout.splitlines() if ln.strip()]

@@ -3,10 +3,11 @@ import subprocess
 import tempfile
 import unittest
 
+from davinci_mcp import paths
 from davinci_mcp.tools import TOOLS, ToolError, validate_args
 from davinci_mcp.tools import render  # noqa: F401  (registers the tools)
 
-FUSCRIPT = "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fuscript"
+FUSCRIPT = paths.FUSCRIPT
 NAMES = {
     "get_render_status": "read", "list_render_options": "read", "add_render_job": "write",
     "start_render": "write", "stop_render": "write", "delete_render_job": "destructive",
@@ -68,7 +69,7 @@ class RenderToolsTest(unittest.TestCase):
                 fh.write(code)
             try:
                 out = subprocess.run(
-                    [FUSCRIPT, "-l", "lua", "-x", "assert(loadfile('%s')); print('ok')" % fh.name],
+                    [FUSCRIPT, "-l", "lua", "-x", "assert(loadfile('%s')); print('ok')" % fh.name.replace("\\", "/")],
                     capture_output=True, text=True, timeout=60)
             finally:
                 os.unlink(fh.name)

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Windows support (tested on Windows 11 with DaVinci Resolve 21.2 free). `py install.py` installs the bridge into `%APPDATA%\Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility`, uses `%LOCALAPPDATA%\ClaudeMCP` as the state directory and checks that it is a Resolve Media Storage location (required on Windows for `GetSubFolderList`).
+- New `davinci_mcp/paths.py` holds the per-platform Resolve folders.
+- Transport: `msvcrt.locking` replaces `fcntl.flock` on Windows; request chunks shrink to keep folder paths within `MAX_PATH`; the liveness check uses `OpenProcess` on Windows instead of `os.kill(pid, 0)`, which would terminate Resolve there.
+- Bridge: joins the inbox path with the state directory's own separator (Windows MediaStorage only lists backslash paths); falls back to `%LOCALAPPDATA%\ClaudeMCP` when no stamp is present.
+- `import_media` and `export_timeline` accept Windows absolute paths (`C:\`, `C:/`, UNC) through a new `is_abs_path` prelude helper.
+- Tests run on Windows (including the fuscript-backed bridge round trip); CI adds `windows-latest`.
+
 ## 0.2.0 — 2026-10-31
 
 - Claude Code plugin: the repository is now its own plugin marketplace. `/plugin marketplace add kingjamesch/davinci-resolve-mcp` then `/plugin install davinci-resolve@davinci-resolve-mcp` registers the `davinci` MCP server without cloning.
